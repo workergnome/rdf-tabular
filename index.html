@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Rdf-tabular by ruby-rdf</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Rdf-tabular</h1>
+      <h2 class="project-tagline">Tabular Data RDF Reader and JSON serializer</h2>
+      <a href="https://github.com/ruby-rdf/rdf-tabular" class="btn">View on GitHub</a>
+      <a href="https://github.com/ruby-rdf/rdf-tabular/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/ruby-rdf/rdf-tabular/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="tabular-data-rdf-reader-and-json-serializer" class="anchor" href="#tabular-data-rdf-reader-and-json-serializer" aria-hidden="true"><span class="octicon octicon-link"></span></a>Tabular Data RDF Reader and JSON serializer</h1>
+
+<p><a href="http://en.wikipedia.org/wiki/Comma-separated_values">CSV</a> reader for <a href="http://rubygems.org/gems/rdf">RDF.rb</a> and fully JSON serializer.</p>
+
+<p><a href="http://badge.fury.io/rb/rdf-tabular"><img src="https://badge.fury.io/rb/rdf-tabular.png" alt="Gem Version"></a>
+<a href="http://travis-ci.org/ruby-rdf/rdf-tabular"><img src="https://secure.travis-ci.org/ruby-rdf/rdf-tabular.png?branch=master" alt="Build Status"></a></p>
+
+<h2>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<p>RDF::Tabular parses CSV or other Tabular Data into <a href="http://www.w3.org/RDF/">RDF</a> and JSON using the <a href="http://www.w3.org/2013/csvw/wiki/Main_Page">W3C CSVW</a> specifications, currently undergoing development.</p>
+
+<p>Install with <code>gem install rdf-tabular</code></p>
+
+<p>RDF::Tabular parses CSVs, TSVs, and potentially other tabular data formats. Using rules defined for <a href="http://www.w3.org/2013/csvw/wiki/Main_Page">W3C CSVW</a>, it can also parse metadata files (in JSON-LD format) to find a set of tabular data files, or locate a metadata file given a CSV:</p>
+
+<ul>
+<li>Given a CSV <code>http://example.org/mycsv.csv</code> look for <code>http://example.org/mycsv.csv-metata.json</code> or <code>http://example.org/metadata.json</code>. Metadata can also be specified using the <code>describedby</code> link header to reference a metadata file.</li>
+<li>Given a metadata file, locate one or more CSV files described within the metadata file.</li>
+<li>Also, extract <em>embedded metadata</em> from the CSV (limited to column titles right now).</li>
+</ul>
+
+<p>Metadata can then provide datatypes for the columns, express foreign key relationships, and associate subjects and predicates with columns. An example <a href="https://raw.githubusercontent.com/ruby-rdf/rdf-tabular/develop/etc/doap.csv-metadata.json">metadata file for the project DOAP description</a> is:</p>
+
+<pre><code>{
+  "@context": "http://www.w3.org/ns/csvw",
+  "url": "doap.csv",
+  "tableSchema": {
+    "aboutUrl": "http://rubygems.org/gems/rdf-tabular",
+    "propertyUrl": "http://usefulinc.com/ns/doap#{_name}",
+    "null": "",
+    "columns": [
+      {"titles": "name"},
+      {"titles": "type", "propertyUrl": "rdf:type", "valueUrl": "{+type}"},
+      {"titles": "homepage", "valueUrl": "{+homepage}"},
+      {"titles": "license", "valueUrl": "{+license}"},
+      {"titles": "shortdesc", "lang": "en"},
+      {"titles": "description", "lang": "en"},
+      {"titles": "created", "datatype": {"base": "date", "format": "M/d/yyyy"}},
+      {"titles": "programming_language", "propertyUrl": "http://usefulinc.com/ns/doap#programming-language"},
+      {"titles": "implements", "valueUrl": "{+implements}"},
+      {"titles": "category", "valueUrl": "{+category}"},
+      {"titles": "download_page", "propertyUrl": "http://usefulinc.com/ns/doap#download-page", "valueUrl": "{+download_page}"},
+      {"titles": "mailing_list", "propertyUrl": "http://usefulinc.com/ns/doap#mailing-list", "valueUrl": "{+mailing_list}"},
+      {"titles": "bug_database", "propertyUrl": "http://usefulinc.com/ns/doap#bug-database", "valueUrl": "{+bug_database}"},
+      {"titles": "blog", "valueUrl": "{+blog}"},
+      {"titles": "developer", "valueUrl": "{+developer}"},
+      {"titles": "maintainer", "valueUrl": "{+maintainer}"},
+      {"titles": "documenter", "valueUrl": "{+documenter}"},
+      {"titles": "maker", "propertyUrl": "foaf:maker", "valueUrl": "{+maker}"},
+      {"titles": "dc_title", "propertyUrl": "dc:title"},
+      {"titles": "dc_description", "propertyUrl": "dc:description", "lang": "en"},
+      {"titles": "dc_date", "propertyUrl": "dc:date", "datatype": {"base": "date", "format": "M/d/yyyy"}},
+      {"titles": "dc_creator", "propertyUrl": "dc:creator", "valueUrl": "{+dc_creator}"},
+      {"titles": "isPartOf", "propertyUrl": "dc:isPartOf", "valueUrl": "{+isPartOf}"}
+    ]
+  }
+}
+</code></pre>
+
+<p>This associates the metadata with the CSV <a href="https://raw.githubusercontent.com/ruby-rdf/rdf-tabular/develop/etc/doap.csv">doap.csv</a>, creates a common subject for all rows in the file, and a common predicate using the URI Template <a href="https://tools.ietf.org/html/rfc6570">URI Template</a> <code>http://usefulinc.com/ns/doap#\{_name\}</code> which uses the <code>name</code> of each column (defaulted from <code>titles</code>) to construct a URI in the DOAP vocabulary, and constructs object URIs for object-valued properties from the contents of the column cells. In some cases, the predicates are changed on a per-column basis by using a different <code>propertyUrl</code> property on a given column.</p>
+
+<p>This results in the following Turtle:</p>
+
+<pre><code>@prefix csvw: &lt;http://www.w3.org/ns/csvw#&gt; .
+@prefix dc: &lt;http://purl.org/dc/terms/&gt; .
+@prefix doap: &lt;http://usefulinc.com/ns/doap#&gt; .
+@prefix foaf: &lt;http://xmlns.com/foaf/0.1/&gt; .
+@prefix prov: &lt;http://www.w3.org/ns/prov#&gt; .
+@prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+
+&lt;http://rubygems.org/gems/rdf-tabular&gt; a doap:Project,
+     &lt;http://www.w3.org/ns/earl#TestSubject&gt;,
+     &lt;http://www.w3.org/ns/earl#Software&gt;;
+   dc:title "RDF::Tabular";
+   dc:creator &lt;http://greggkellogg.net/foaf#me&gt;;
+   dc:date "2015-01-05"^^xsd:date;
+   dc:description "RDF::Tabular processes tabular data with metadata creating RDF or JSON output."@en;
+   dc:isPartOf &lt;http://rubygems.org/gems/rdf&gt;;
+   doap:blog &lt;http://greggkellogg.net/&gt;;
+   doap:bug-database &lt;http://github.com/ruby-rdf/rdf-tabular/issues&gt;;
+   doap:category &lt;http://dbpedia.org/resource/Resource_Description_Framework&gt;,
+     &lt;http://dbpedia.org/resource/Ruby_(programming_language)&gt;;
+   doap:created "2015-01-05"^^xsd:date;
+   doap:description "RDF::Tabular processes tabular data with metadata creating RDF or JSON output."@en;
+   doap:developer &lt;http://greggkellogg.net/foaf#me&gt;;
+   doap:documenter &lt;http://greggkellogg.net/foaf#me&gt;;
+   doap:download-page &lt;http://rubygems.org/gems/rdf-tabular&gt;;
+   doap:homepage &lt;http://ruby-rdf.github.com/rdf-tabular&gt;;
+   doap:implements &lt;http://www.w3.org/TR/tabular-data-model/&gt;,
+     &lt;http://www.w3.org/TR/tabular-metadata/&gt;,
+     &lt;http://www.w3.org/TR/csv2rdf/&gt;,
+     &lt;http://www.w3.org/TR/csv2json/&gt;;
+   doap:license &lt;http://creativecommons.org/licenses/publicdomain/&gt;;
+   doap:mailing-list &lt;http://lists.w3.org/Archives/Public/public-rdf-ruby/&gt;;
+   doap:maintainer &lt;http://greggkellogg.net/foaf#me&gt;;
+   doap:name "RDF::Tabular";
+   doap:programming-language "Ruby";
+   doap:shortdesc "Tabular Data RDF Reader and JSON serializer."@en;
+   foaf:maker &lt;http://greggkellogg.net/foaf#me&gt; .
+
+ [
+    a csvw:TableGroup;
+    csvw:table [
+      a csvw:Table;
+      csvw:row [
+        a csvw:Row;
+        csvw:describes &lt;http://rubygems.org/gems/rdf-tabular&gt;;
+        csvw:rownum 1;
+        csvw:url &lt;file://users/gregg/Projects/rdf-tabular/etc/doap.csv#row=2&gt;
+      ],  [
+        a csvw:Row;
+        csvw:describes &lt;http://rubygems.org/gems/rdf-tabular&gt;;
+        csvw:rownum 2;
+        csvw:url &lt;file://users/gregg/Projects/rdf-tabular/etc/doap.csv#row=3&gt;
+      ],  [
+        a csvw:Row;
+        csvw:describes &lt;http://rubygems.org/gems/rdf-tabular&gt;;
+        csvw:rownum 3;
+        csvw:url &lt;file://users/gregg/Projects/rdf-tabular/etc/doap.csv#row=4&gt;
+      ],  [
+        a csvw:Row;
+        csvw:describes &lt;http://rubygems.org/gems/rdf-tabular&gt;;
+        csvw:rownum 4;
+        csvw:url &lt;file://users/gregg/Projects/rdf-tabular/etc/doap.csv#row=5&gt;
+      ];
+      csvw:url &lt;file://users/gregg/Projects/rdf-tabular/etc/doap.csv&gt;
+    ];
+    prov:wasGeneratedBy [
+      a prov:Activity;
+      prov:endedAtTime "2015-04-11T12:33:26Z"^^xsd:dateTime;
+      prov:qualifiedUsage [
+        a prov:Usage;
+        prov:entity &lt;file://users/gregg/Projects/rdf-tabular/etc/doap.csv&gt;;
+        prov:hadRole csvw:csvEncodedTabularData
+      ],  [
+        a prov:Usage;
+        prov:entity &lt;file://users/gregg/Projects/rdf-tabular/etc/doap.csv-metadata.json&gt;;
+        prov:hadRole csvw:tabularMetadata
+      ];
+      prov:startedAtTime "2015-04-11T12:33:25Z"^^xsd:dateTime;
+      prov:wasAssociatedWith &lt;http://rubygems.org/gems/rdf-tabular&gt;
+    ]
+ ] .
+</code></pre>
+
+<p>The provenance on table-source information can be excluded by using the <code>:minimal</code> option to the reader.</p>
+
+<p>It can also generate JSON output (not complete JSON-LD, but compatible with it), using the {RDF::Tabular::Reader#to_json} method:</p>
+
+<pre><code>{
+  "table": [
+    {
+      "url": "file://users/gregg/Projects/rdf-tabular/etc/doap.csv",
+      "row": [
+        {
+          "url": "file://users/gregg/Projects/rdf-tabular/etc/doap.csv#row=2",
+          "rownum": 1,
+          "describes": [
+            {
+              "@id": "http://rubygems.org/gems/rdf-tabular",
+              "http://usefulinc.com/ns/doap#name": "RDF::Tabular",
+              "@type": "http://usefulinc.com/ns/doap#Project",
+              "http://usefulinc.com/ns/doap#homepage": "http://ruby-rdf.github.com/rdf-tabular",
+              "http://usefulinc.com/ns/doap#license": "http://creativecommons.org/licenses/publicdomain/",
+              "http://usefulinc.com/ns/doap#shortdesc": "Tabular Data RDF Reader and JSON serializer.",
+              "http://usefulinc.com/ns/doap#description": "RDF::Tabular processes tabular data with metadata creating RDF or JSON output.",
+              "http://usefulinc.com/ns/doap#created": "2015-01-05",
+              "http://usefulinc.com/ns/doap#programming-language": "Ruby",
+              "http://usefulinc.com/ns/doap#implements": "http://www.w3.org/TR/tabular-data-model/",
+              "http://usefulinc.com/ns/doap#category": "http://dbpedia.org/resource/Resource_Description_Framework",
+              "http://usefulinc.com/ns/doap#download-page": "http://rubygems.org/gems/rdf-tabular",
+              "http://usefulinc.com/ns/doap#mailing-list": "http://lists.w3.org/Archives/Public/public-rdf-ruby/",
+              "http://usefulinc.com/ns/doap#bug-database": "http://github.com/ruby-rdf/rdf-tabular/issues",
+              "http://usefulinc.com/ns/doap#blog": "http://greggkellogg.net/",
+              "http://usefulinc.com/ns/doap#developer": "http://greggkellogg.net/foaf#me",
+              "http://usefulinc.com/ns/doap#maintainer": "http://greggkellogg.net/foaf#me",
+              "http://usefulinc.com/ns/doap#documenter": "http://greggkellogg.net/foaf#me",
+              "foaf:maker": "http://greggkellogg.net/foaf#me",
+              "dc:title": "RDF::Tabular",
+              "dc:description": "RDF::Tabular processes tabular data with metadata creating RDF or JSON output.",
+              "dc:date": "2015-01-05",
+              "dc:creator": "http://greggkellogg.net/foaf#me",
+              "dc:isPartOf": "http://rubygems.org/gems/rdf"
+            }
+          ]
+        },
+        {
+          "url": "file://users/gregg/Projects/rdf-tabular/etc/doap.csv#row=3",
+          "rownum": 2,
+          "describes": [
+            {
+              "@id": "http://rubygems.org/gems/rdf-tabular",
+              "@type": "http://www.w3.org/ns/earl#TestSubject",
+              "http://usefulinc.com/ns/doap#implements": "http://www.w3.org/TR/tabular-metadata/",
+              "http://usefulinc.com/ns/doap#category": "http://dbpedia.org/resource/Ruby_(programming_language)"
+            }
+          ]
+        },
+        {
+          "url": "file://users/gregg/Projects/rdf-tabular/etc/doap.csv#row=4",
+          "rownum": 3,
+          "describes": [
+            {
+              "@id": "http://rubygems.org/gems/rdf-tabular",
+              "@type": "http://www.w3.org/ns/earl#Software",
+              "http://usefulinc.com/ns/doap#implements": "http://www.w3.org/TR/csv2rdf/"
+            }
+          ]
+        },
+        {
+          "url": "file://users/gregg/Projects/rdf-tabular/etc/doap.csv#row=5",
+          "rownum": 4,
+          "describes": [
+            {
+              "@id": "http://rubygems.org/gems/rdf-tabular",
+              "http://usefulinc.com/ns/doap#implements": "http://www.w3.org/TR/csv2json/"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+</code></pre>
+
+<h2>
+<a id="examples" class="anchor" href="#examples" aria-hidden="true"><span class="octicon octicon-link"></span></a>Examples</h2>
+
+<pre><code>require 'rubygems'
+require 'rdf/tabular'
+</code></pre>
+
+<h2>
+<a id="rdf-reader" class="anchor" href="#rdf-reader" aria-hidden="true"><span class="octicon octicon-link"></span></a>RDF Reader</h2>
+
+<p>RDF::Tabular also acts as a normal RDF reader, using the standard RDF.rb Reader interface:</p>
+
+<pre><code>graph = RDF::Graph.load("etc/doap.csv", minimal: true)
+</code></pre>
+
+<h2>
+<a id="documentation" class="anchor" href="#documentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Documentation</h2>
+
+<p>Full documentation available on <a href="http://rubydoc.info/gems/rdf-tabular/file/README.md">RubyDoc</a></p>
+
+<h3>
+<a id="principal-classes" class="anchor" href="#principal-classes" aria-hidden="true"><span class="octicon octicon-link"></span></a>Principal Classes</h3>
+
+<ul>
+<li>{RDF::Tabular}
+
+<ul>
+<li>{RDF::Tabular::JSON}</li>
+<li>{RDF::Tabular::Format}</li>
+<li>{RDF::Tabular::Metadata}</li>
+<li>{RDF::Tabular::Reader}</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="dependencies" class="anchor" href="#dependencies" aria-hidden="true"><span class="octicon octicon-link"></span></a>Dependencies</h2>
+
+<ul>
+<li>
+<a href="http://ruby-lang.org/">Ruby</a> (&gt;= 2.0.0)</li>
+<li>
+<a href="http://rubygems.org/gems/rdf">RDF.rb</a> (&gt;= 1.0)</li>
+<li>
+<a href="https://rubygems.org/gems/json">JSON</a> (&gt;= 1.5)</li>
+</ul>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<p>The recommended installation method is via <a href="http://rubygems.org/">RubyGems</a>.
+To install the latest official release of the <code>RDF::Tabular</code> gem, do:</p>
+
+<pre><code>% [sudo] gem install rdf-tabular
+</code></pre>
+
+<h2>
+<a id="mailing-list" class="anchor" href="#mailing-list" aria-hidden="true"><span class="octicon octicon-link"></span></a>Mailing List</h2>
+
+<ul>
+<li><a href="http://lists.w3.org/Archives/Public/public-rdf-ruby/">http://lists.w3.org/Archives/Public/public-rdf-ruby/</a></li>
+</ul>
+
+<h2>
+<a id="author" class="anchor" href="#author" aria-hidden="true"><span class="octicon octicon-link"></span></a>Author</h2>
+
+<ul>
+<li>
+<a href="http://github.com/gkellogg">Gregg Kellogg</a> - <a href="http://greggkellogg.net/">http://greggkellogg.net/</a>
+</li>
+</ul>
+
+<h2>
+<a id="contributing" class="anchor" href="#contributing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributing</h2>
+
+<ul>
+<li>Do your best to adhere to the existing coding conventions and idioms.</li>
+<li>Don't use hard tabs, and don't leave trailing whitespace on any line.</li>
+<li>Do document every method you add using <a href="http://yardoc.org/">YARD</a> annotations. Read the
+<a href="http://rubydoc.info/docs/yard/file/docs/GettingStarted.md">tutorial</a> or just look at the existing code for examples.</li>
+<li>Don't touch the <code>rdf-tabular.gemspec</code>, <code>VERSION</code> or <code>AUTHORS</code> files. If you need to change them, do so on your private branch only.</li>
+<li>Do feel free to add yourself to the <code>CREDITS</code> file and the corresponding list in the the <code>README</code>. Alphabetical order applies.</li>
+<li>Do note that in order for us to merge any non-trivial changes (as a rule of thumb, additions larger than about 15 lines of code), we need an explicit <a href="http://lists.w3.org/Archives/Public/public-rdf-ruby/2010May/0013.html">public domain dedication</a> on record from you.</li>
+</ul>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>This is free and unencumbered public domain software. For more information,
+see <a href="http://unlicense.org/">http://unlicense.org/</a> or the accompanying {file:UNLICENSE} file.</p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/ruby-rdf/rdf-tabular">Rdf-tabular</a> is maintained by <a href="https://github.com/ruby-rdf">ruby-rdf</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
+
